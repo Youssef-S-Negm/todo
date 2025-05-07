@@ -13,6 +13,7 @@ class Todo {
 }
 
 const todos = [];
+let searchQuery = "";
 
 function setUpAddTodoForm() {
     document.getElementById("add-todo-form").onsubmit = function (e) {
@@ -38,15 +39,19 @@ function setUpSearchForm() {
     document.getElementById("search-pending-todos-form").onsubmit = function (e) {
         e.preventDefault();
 
-        const searchInput = document.getElementById("search-pending-todos-input");
+        searchQuery = document.getElementById("search-pending-todos-input").value;
 
-        if (isValidInput(searchInput.value)) {
-            filterCards(searchInput.value);
-            return;
-        }
-
-        makeAllCardsVisible();
+        search();
     }
+}
+
+function search() {
+    if (isValidInput(searchQuery)) {
+        filterCards(searchQuery);
+        return;
+    }
+
+    makeAllCardsVisible();
 }
 
 setUpAddTodoForm();
@@ -231,6 +236,7 @@ function renderTodos() {
     searchTodosInput.type = "text";
     searchTodosInput.id = "search-pending-todos-input";
     searchTodosInput.placeholder = "Search your todos";
+    searchTodosInput.value = searchQuery;
     searchTodosInput.classList.add("rounded", "p-1");
 
     searchIcon.classList.add("fa-solid", "fa-magnifying-glass", "text-light");
@@ -255,4 +261,6 @@ function renderTodos() {
             completedTodos.appendChild(createCard(todo));
         }
     })
+
+    search();
 }
