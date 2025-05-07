@@ -1,3 +1,5 @@
+let id = 1;
+
 class Todo {
     /**
      * 
@@ -6,6 +8,7 @@ class Todo {
     constructor(title) {
         this.title = title;
         this.status = "pending"
+        this.id = id++;
     }
 }
 
@@ -16,7 +19,7 @@ document.getElementById("add-todo-form").onsubmit = function (e) {
 
     if (isValidInput(input.value)) {
         const todo = new Todo(input.value);
-        const card = createCard();
+        const card = createCard(todo);
         const cardBody = createCardBody();
         const title = createTitle(todo.title);
         const checkBox = createCheckBox(card, todo);
@@ -24,6 +27,8 @@ document.getElementById("add-todo-form").onsubmit = function (e) {
         cardBody.appendChild(title);
         cardBody.appendChild(checkBox);
         card.appendChild(cardBody);
+        card.draggable = true;
+        card.ondragstart = onDragStart;
 
         document.getElementById("pending-todos").appendChild(card);
 
@@ -58,11 +63,13 @@ function isValidInput(input) {
 
 /**
  * 
+ * @param {Todo} todo
  * @returns HTMLDivElement
  */
-function createCard() {
+function createCard(todo) {
     const card = document.createElement("div");
     card.classList.add("card", "mb-2");
+    card.dataset.id = todo.id.toString();
 
     return card;
 }
@@ -147,7 +154,7 @@ function filterCards(input) {
         const title = cards[i]
             .querySelector(".card-body span")
             .textContent;
-        
+
         cards[i].style.display = isMatched(title, input) ? "" : "none";
     }
 }
@@ -170,3 +177,42 @@ function makeAllCardsVisible() {
         cards[i].style.display = "";
     }
 }
+
+/**
+ * 
+ * @param {DragEvent} event 
+ */
+function onDragStart(event) {
+    event.dataTransfer.setData("text", event.target.dataset.id)
+}
+
+/**
+ * 
+ * @param {string} zoneId 
+ * @param {string} status 
+ */
+function setupDropZone(zoneId, status) {
+    const zone = document.getElementById(`${zoneId}-section`);
+
+    zone.addEventListener("dragover", e => {
+        e.preventDefault();
+    });
+
+    zone.addEventListener("drop", e => {
+        e.preventDefault();
+        zone.classList.remove("drag-over");
+
+        const id = e.dataTransfer.getData("text/plain");
+        const card = document.querySelector(`[data-id="${id}"]`);
+
+        if (!card || zone === card.parentElement) return;
+
+        document.getElementById(`${zoneId}-todos`).appendChild(card);
+
+        const cb = card.querySelector('input[type="checkbox"]');
+        cb.checked = (status === "done");
+    });
+}
+
+setupDropZone("pending", "pending");
+setupDropZone("completed", "done");
