@@ -1,5 +1,15 @@
 let id = 1;
 
+const TODO_IMPORTANCE_LOW = 1;
+const TODO_IMPORTANCE_HIGH = 2;
+
+const SORT_OPTION_DATE_ASC = "date-asc";
+const SORT_OPTION_DATE_DESC = "date-desc";
+const SORT_OPTION_PRIORITY_ASC = "priority-asc";
+const SORT_OPTION_PRIORITY_DESC = "priority-desc";
+
+let sortOption = SORT_OPTION_DATE_ASC;
+
 class Todo {
     /**
      * 
@@ -9,9 +19,14 @@ class Todo {
         this.title = title;
         this.status = "pending"
         this.id = id++;
+        this.dateCreated = new Date();
+        this.priority = TODO_IMPORTANCE_LOW;
     }
 }
 
+/**
+ * @type {Todo[]}
+ */
 const todos = [];
 let searchQuery = "";
 
@@ -45,6 +60,19 @@ function setUpSearchForm() {
     }
 }
 
+function setUpSortActions() {
+    const selectSort = document.getElementById("sort-option")
+
+    selectSort.onchange = function (event) {
+        event.preventDefault();
+        sortOption = event.target.value;
+
+        renderTodos();
+    }
+
+    selectSort.value = sortOption;
+}
+
 function search() {
     if (isValidInput(searchQuery)) {
         filterCards(searchQuery);
@@ -56,6 +84,7 @@ function search() {
 
 setUpAddTodoForm();
 setUpSearchForm();
+setUpSortActions();
 
 /**
  * 
@@ -91,14 +120,48 @@ function createCard(todo) {
  */
 function createCardBody(todo) {
     const cardBody = document.createElement("div");
+    const indicator = createIndicator(todo);
     const title = createTitle(todo);
     const checkBox = createCheckBox(todo);
 
     cardBody.classList.add("card-body", "d-flex", "align-items-center", "justify-content-between");
+    cardBody.appendChild(indicator);
     cardBody.appendChild(title);
     cardBody.appendChild(checkBox);
 
     return cardBody;
+}
+
+/**
+ * 
+ * @param {Todo} todo 
+ * @returns HTMLElement
+ */
+function createIndicator(todo) {
+    const icon = document.createElement("i");
+
+    icon.onclick = function (event) {
+        event.preventDefault();
+
+        for (let i = 0; i < todos.length; i++) {
+            if (todos[i].id === todo.id) {
+                todos[i].priority =
+                    todos[i].priority === TODO_IMPORTANCE_LOW ? TODO_IMPORTANCE_HIGH : TODO_IMPORTANCE_LOW;
+                break;
+            }
+        }
+
+        renderTodos();
+    }
+
+    if (todo.priority === TODO_IMPORTANCE_LOW) {
+        icon.classList.add("fa-solid", "fa-triangle-exclamation", "text-secondary");
+        return icon;
+    }
+
+    icon.classList.add("fa-solid", "fa-triangle-exclamation", "text-danger");
+
+    return icon;
 }
 
 /**
@@ -113,10 +176,8 @@ function createTitle(todo) {
     return span;
 }
 
-
 /**
  * 
- * @param {HTMLDivElement} card 
  * @param {Todo} todo
  * @returns HTMLInputElement
  */
@@ -218,12 +279,20 @@ setupDropZone("completed");
 function renderTodos() {
     const pendingTodos = document.getElementById("pending-todos");
     const completedTodos = document.getElementById("completed-todos");
+
     const pendingTitle = document.createElement("h2");
     const completedTitle = document.createElement("h2");
+
     const searchTodosForm = document.createElement("form");
     const searchTodosInput = document.createElement("input");
     const searchBtn = document.createElement("button");
     const searchIcon = document.createElement("i");
+
+    const selectSort = document.createElement("select");
+    const sortOptionDateAsc = document.createElement("option");
+    const sortOptionDateDesc = document.createElement("option");
+    const sortOptionPriorityAsc = document.createElement("option");
+    const sortOptionPriorityDesc = document.createElement("option");
 
     pendingTodos.innerHTML = "";
     completedTodos.innerHTML = "";
@@ -248,11 +317,50 @@ function renderTodos() {
     searchTodosForm.appendChild(searchTodosInput);
     searchTodosForm.appendChild(searchBtn);
 
+    selectSort.id = "sort-option";
+    selectSort.name = "sort-option";
+    selectSort.classList.add("rounded", "mb-3");
+
+    sortOptionDateAsc.value = SORT_OPTION_DATE_ASC;
+    sortOptionDateAsc.textContent = "date (oldest to newest)"
+
+    sortOptionDateDesc.value = SORT_OPTION_DATE_DESC;
+    sortOptionDateDesc.textContent = "date (newest to oldest)"
+
+    sortOptionPriorityAsc.value = SORT_OPTION_PRIORITY_ASC;
+    sortOptionPriorityAsc.textContent = "priority (low to high)"
+
+    sortOptionPriorityDesc.value = SORT_OPTION_PRIORITY_DESC;
+    sortOptionPriorityDesc.textContent = "priority (high to low)"
+
+    selectSort.appendChild(sortOptionDateAsc);
+    selectSort.appendChild(sortOptionDateDesc);
+    selectSort.appendChild(sortOptionPriorityAsc);
+    selectSort.appendChild(sortOptionPriorityDesc);
+
     pendingTodos.appendChild(pendingTitle);
     pendingTodos.appendChild(searchTodosForm);
+    pendingTodos.appendChild(selectSort);
     completedTodos.appendChild(completedTitle);
 
     setUpSearchForm();
+    setUpSortActions();
+
+    todos.sort((a, b) => {
+        switch (sortOption) {
+            case SORT_OPTION_DATE_ASC:
+                return a.dateCreated - b.dateCreated;
+
+            case SORT_OPTION_DATE_DESC:
+                return b.dateCreated - a.dateCreated;
+
+            case SORT_OPTION_PRIORITY_ASC:
+                return a.priority - b.priority;
+
+            case SORT_OPTION_PRIORITY_DESC:
+                return b.priority - a.priority;
+        }
+    })
 
     todos.forEach(todo => {
         if (todo.status === "pending") {
