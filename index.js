@@ -119,7 +119,7 @@ function createCheckBox(todo) {
     const checkBox = document.createElement("input");
     checkBox.type = "checkbox";
     checkBox.name = "status";
-    checkBox.id = checkBox.name;
+    checkBox.id = todo.id;
     checkBox.checked = (todo.status === "done");
 
     checkBox.addEventListener('change', function (e) {
