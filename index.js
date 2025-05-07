@@ -12,45 +12,45 @@ class Todo {
     }
 }
 
-document.getElementById("add-todo-form").onsubmit = function (e) {
-    e.preventDefault();
+const todos = [];
 
-    const input = document.getElementById("add-todo-input");
+function setUpAddTodoForm() {
+    document.getElementById("add-todo-form").onsubmit = function (e) {
+        e.preventDefault();
 
-    if (isValidInput(input.value)) {
-        const todo = new Todo(input.value);
-        const card = createCard(todo);
-        const cardBody = createCardBody();
-        const title = createTitle(todo.title);
-        const checkBox = createCheckBox(card, todo);
+        const input = document.getElementById("add-todo-input");
 
-        cardBody.appendChild(title);
-        cardBody.appendChild(checkBox);
-        card.appendChild(cardBody);
-        card.draggable = true;
-        card.ondragstart = onDragStart;
+        if (isValidInput(input.value)) {
+            const todo = new Todo(input.value);
 
-        document.getElementById("pending-todos").appendChild(card);
+            todos.push(todo);
+            renderTodos();
 
-        input.value = "";
-        return;
+            input.value = "";
+            return;
+        }
+
+        alert("Todo title is empty")
     }
-
-    alert("Todo title is empty")
 }
 
-document.getElementById("search-pending-todos-form").onsubmit = function (e) {
-    e.preventDefault();
+function setUpSearchForm() {
+    document.getElementById("search-pending-todos-form").onsubmit = function (e) {
+        e.preventDefault();
 
-    const searchInput = document.getElementById("search-pending-todos-input");
+        const searchInput = document.getElementById("search-pending-todos-input");
 
-    if (isValidInput(searchInput.value)) {
-        filterCards(searchInput.value);
-        return;
+        if (isValidInput(searchInput.value)) {
+            filterCards(searchInput.value);
+            return;
+        }
+
+        makeAllCardsVisible();
     }
-
-    makeAllCardsVisible();
 }
+
+setUpAddTodoForm();
+setUpSearchForm();
 
 /**
  * 
@@ -68,31 +68,42 @@ function isValidInput(input) {
  */
 function createCard(todo) {
     const card = document.createElement("div");
-    card.classList.add("card", "mb-2");
     card.dataset.id = todo.id.toString();
+    card.draggable = true;
+    card.ondragstart = onDragStart;
+    const cardBody = createCardBody(todo);
+
+    card.classList.add("card", "mb-2");
+    card.appendChild(cardBody);
 
     return card;
 }
 
 /**
  * 
+ * @param {Todo} todo
  * @returns HTMLDivElement
  */
-function createCardBody() {
+function createCardBody(todo) {
     const cardBody = document.createElement("div");
+    const title = createTitle(todo);
+    const checkBox = createCheckBox(todo);
+
     cardBody.classList.add("card-body", "d-flex", "align-items-center", "justify-content-between");
+    cardBody.appendChild(title);
+    cardBody.appendChild(checkBox);
 
     return cardBody;
 }
 
 /**
  * 
- * @param {string} title 
+ * @param {Todo} todo 
  * @returns HTMLSpanElement 
  */
-function createTitle(title) {
+function createTitle(todo) {
     const span = document.createElement("span");
-    span.textContent = title;
+    span.textContent = todo.title;
 
     return span;
 }
@@ -104,42 +115,25 @@ function createTitle(title) {
  * @param {Todo} todo
  * @returns HTMLInputElement
  */
-function createCheckBox(card, todo) {
+function createCheckBox(todo) {
     const checkBox = document.createElement("input");
     checkBox.type = "checkbox";
     checkBox.name = "status";
     checkBox.id = checkBox.name;
+    checkBox.checked = (todo.status === "done");
 
     checkBox.addEventListener('change', function (e) {
-        if (e.target.checked) {
-            todo.status = "done";
-            moveToCompletedTodos(card);
-            return;
+        for (let i = 0; i < todos.length; i++) {
+            if (todos[i].id === todo.id) {
+                todos[i].status = todos[i].status === "pending" ? "done" : "pending";
+                break;
+            }
         }
 
-        todo.status = "pending";
-        moveToPendingTodos(card);
+        renderTodos();
     });
 
     return checkBox;
-}
-
-/**
- * 
- * @param {HTMLDivElement} card 
- */
-function moveToCompletedTodos(card) {
-    document.getElementById("pending-todos").removeChild(card);
-    document.getElementById("completed-todos").appendChild(card);
-}
-
-/**
- * 
- * @param {HTMLDivElement} card 
- */
-function moveToPendingTodos(card) {
-    document.getElementById("completed-todos").removeChild(card);
-    document.getElementById("pending-todos").appendChild(card);
 }
 
 /**
@@ -189,9 +183,8 @@ function onDragStart(event) {
 /**
  * 
  * @param {string} zoneId 
- * @param {string} status 
  */
-function setupDropZone(zoneId, status) {
+function setupDropZone(zoneId) {
     const zone = document.getElementById(`${zoneId}-section`);
 
     zone.addEventListener("dragover", e => {
@@ -200,19 +193,66 @@ function setupDropZone(zoneId, status) {
 
     zone.addEventListener("drop", e => {
         e.preventDefault();
-        zone.classList.remove("drag-over");
 
         const id = e.dataTransfer.getData("text/plain");
-        const card = document.querySelector(`[data-id="${id}"]`);
 
-        if (!card || zone === card.parentElement) return;
+        for (let i = 0; i < todos.length; i++) {
+            if (todos[i].id == id) {
+                todos[i].status = zoneId === "pending" ? "pending" : "done";
+                break;
+            }
+        }
 
-        document.getElementById(`${zoneId}-todos`).appendChild(card);
-
-        const cb = card.querySelector('input[type="checkbox"]');
-        cb.checked = (status === "done");
+        renderTodos();
     });
 }
 
-setupDropZone("pending", "pending");
-setupDropZone("completed", "done");
+setupDropZone("pending");
+setupDropZone("completed");
+
+function renderTodos() {
+    const pendingTodos = document.getElementById("pending-todos");
+    const completedTodos = document.getElementById("completed-todos");
+    const pendingTitle = document.createElement("h2");
+    const completedTitle = document.createElement("h2");
+    const searchTodosForm = document.createElement("form");
+    const searchTodosInput = document.createElement("input");
+    const searchBtn = document.createElement("button");
+    const searchIcon = document.createElement("i");
+
+    pendingTodos.innerHTML = "";
+    completedTodos.innerHTML = "";
+    pendingTitle.textContent = "Pending Todos";
+    completedTitle.textContent = "Completed Todos";
+
+    searchTodosForm.id = "search-pending-todos-form";
+    searchTodosForm.classList.add("d-flex", "align-items-center", "gap-2", "mb-3");
+
+    searchTodosInput.type = "text";
+    searchTodosInput.id = "search-pending-todos-input";
+    searchTodosInput.placeholder = "Search your todos";
+    searchTodosInput.classList.add("rounded", "p-1");
+
+    searchIcon.classList.add("fa-solid", "fa-magnifying-glass", "text-light");
+
+    searchBtn.type = "submit";
+    searchBtn.classList.add("btn", "bg-primary");
+    searchBtn.appendChild(searchIcon);
+
+    searchTodosForm.appendChild(searchTodosInput);
+    searchTodosForm.appendChild(searchBtn);
+
+    pendingTodos.appendChild(pendingTitle);
+    pendingTodos.appendChild(searchTodosForm);
+    completedTodos.appendChild(completedTitle);
+
+    setUpSearchForm();
+
+    todos.forEach(todo => {
+        if (todo.status === "pending") {
+            pendingTodos.appendChild(createCard(todo));
+        } else {
+            completedTodos.appendChild(createCard(todo));
+        }
+    })
+}
