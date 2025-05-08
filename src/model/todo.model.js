@@ -1,6 +1,8 @@
+import { TODO_IMPORTANCE_LOW } from "../constants/constants.js";
+
 let id = 1;
 
-class Todo {
+export default class Todo {
     /**
      * 
      * @param {String} title 
@@ -13,5 +15,3 @@ class Todo {
         this.priority = TODO_IMPORTANCE_LOW;
     }
 }
-
-export default Todo;
