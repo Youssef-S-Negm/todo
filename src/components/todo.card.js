@@ -1,4 +1,5 @@
 import { TODO_IMPORTANCE_HIGH, TODO_IMPORTANCE_LOW } from "../constants/constants.js";
+import { updateTodoPrioroty, updateTodoStatus } from "../firebase/todo.service.js";
 import Todo from "../model/todo.model.js";
 import state from "../state.js";
 import renderTodos from "../utils/render.js";
@@ -56,18 +57,27 @@ function createCardBody(todo) {
 function createIndicator(todo) {
     const icon = document.createElement("i");
 
-    icon.onclick = function (event) {
+    icon.onclick = async function (event) {
         event.preventDefault();
 
-        for (let i = 0; i < state.todos.length; i++) {
-            if (state.todos[i].id === todo.id) {
-                state.todos[i].priority =
-                    state.todos[i].priority === TODO_IMPORTANCE_LOW ? TODO_IMPORTANCE_HIGH : TODO_IMPORTANCE_LOW;
-                break;
+        try {
+            for (let i = 0; i < state.todos.length; i++) {
+                if (state.todos[i].id === todo.id) {
+                    const updatedPriority =
+                        state.todos[i].priority === TODO_IMPORTANCE_LOW ? TODO_IMPORTANCE_HIGH : TODO_IMPORTANCE_LOW;
+
+                    await updateTodoPrioroty(state.todos[i], updatedPriority);
+
+                    state.todos[i].priority = updatedPriority;
+                    break;
+                }
             }
+
+            renderTodos();
+        } catch (error) {
+            console.error(error);
         }
 
-        renderTodos();
     }
 
     if (todo.priority === TODO_IMPORTANCE_LOW) {
@@ -104,15 +114,23 @@ function createCheckBox(todo) {
     checkBox.id = todo.id;
     checkBox.checked = (todo.status === "done");
 
-    checkBox.addEventListener('change', function (e) {
-        for (let i = 0; i < state.todos.length; i++) {
-            if (state.todos[i].id === todo.id) {
-                state.todos[i].status = state.todos[i].status === "pending" ? "done" : "pending";
-                break;
-            }
-        }
+    checkBox.addEventListener('change', async function (e) {
+        try {
+            for (let i = 0; i < state.todos.length; i++) {
+                if (state.todos[i].id === todo.id) {
+                    const updatedStatus = state.todos[i].status === "pending" ? "done" : "pending";
 
-        renderTodos();
+                    await updateTodoStatus(state.todos[i], updatedStatus);
+
+                    state.todos[i].status = updatedStatus;
+                    break;
+                }
+            }
+
+            renderTodos();
+        } catch (error) {
+            console.error(error);
+        }
     });
 
     return checkBox;

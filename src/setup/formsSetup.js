@@ -1,3 +1,4 @@
+import { addTodo, getAllTodos, updateTodoStatus } from "../firebase/todo.service.js";
 import Todo from "../model/todo.model.js";
 import state from "../state.js";
 import renderTodos from "../utils/render.js";
@@ -5,7 +6,7 @@ import search from "../utils/search.js";
 import isValidInput from "../utils/validation.js";
 
 export function setUpAddTodoForm() {
-    document.getElementById("add-todo-form").onsubmit = function (e) {
+    document.getElementById("add-todo-form").onsubmit = async function (e) {
         e.preventDefault();
 
         const input = document.getElementById("add-todo-input");
@@ -13,10 +14,18 @@ export function setUpAddTodoForm() {
         if (isValidInput(input.value)) {
             const todo = new Todo(input.value);
 
-            state.todos.push(todo);
-            renderTodos();
+            try {
+                const addedDoc = await addTodo(todo);
+                todo.id = addedDoc.id
 
-            input.value = "";
+                state.todos.push(todo);
+                renderTodos();
+
+                input.value = "";
+            } catch (error) {
+                console.error(error);
+            }
+
             return;
         }
 
@@ -58,18 +67,26 @@ export function setupDropZone(zoneId) {
         e.preventDefault();
     });
 
-    zone.addEventListener("drop", e => {
+    zone.addEventListener("drop", async e => {
         e.preventDefault();
 
         const id = e.dataTransfer.getData("text/plain");
 
-        for (let i = 0; i < state.todos.length; i++) {
-            if (state.todos[i].id == id) {
-                state.todos[i].status = zoneId === "pending" ? "pending" : "done";
-                break;
-            }
-        }
+        try {
+            for (let i = 0; i < state.todos.length; i++) {
+                if (state.todos[i].id == id) {
+                    const updatedStatus = zoneId === "pending" ? "pending" : "done";
 
-        renderTodos();
+                    await updateTodoStatus(state.todos[i], updatedStatus);
+
+                    state.todos[i].status = updatedStatus;
+                    break;
+                }
+            }
+
+            renderTodos();
+        } catch (error) {
+            console.error(error);
+        }
     });
 }
