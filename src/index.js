@@ -6,24 +6,9 @@ import {
     TODO_IMPORTANCE_HIGH,
     TODO_IMPORTANCE_LOW
 } from "./constants/constants.js";
-
-let id = 1;
+import Todo from "./model/todo.model.js";
 
 let sortOption = SORT_OPTION_DATE_ASC;
-
-class Todo {
-    /**
-     * 
-     * @param {String} title 
-     */
-    constructor(title) {
-        this.title = title;
-        this.status = "pending"
-        this.id = id++;
-        this.dateCreated = new Date();
-        this.priority = TODO_IMPORTANCE_LOW;
-    }
-}
 
 /**
  * @type {Todo[]}
