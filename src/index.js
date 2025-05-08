@@ -1,12 +1,13 @@
+import {
+    SORT_OPTION_DATE_ASC,
+    SORT_OPTION_DATE_DESC,
+    SORT_OPTION_PRIORITY_ASC,
+    SORT_OPTION_PRIORITY_DESC,
+    TODO_IMPORTANCE_HIGH,
+    TODO_IMPORTANCE_LOW
+} from "./constants/constants.js";
+
 let id = 1;
-
-const TODO_IMPORTANCE_LOW = 1;
-const TODO_IMPORTANCE_HIGH = 2;
-
-const SORT_OPTION_DATE_ASC = "date-asc";
-const SORT_OPTION_DATE_DESC = "date-desc";
-const SORT_OPTION_PRIORITY_ASC = "priority-asc";
-const SORT_OPTION_PRIORITY_DESC = "priority-desc";
 
 let sortOption = SORT_OPTION_DATE_ASC;
 
