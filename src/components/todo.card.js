@@ -1,5 +1,5 @@
 import { TODO_IMPORTANCE_HIGH, TODO_IMPORTANCE_LOW } from "../constants/constants.js";
-import { updateTodoPrioroty, updateTodoStatus } from "../firebase/todo.service.js";
+import { updateTodoPrioroty$, updateTodoStatus$ } from "../firebase/todo.service.js";
 import Todo from "../model/todo.model.js";
 import state from "../state.js";
 import renderTodos from "../utils/render.js";
@@ -49,7 +49,7 @@ function createCardBody(todo) {
 function createIndicator(todo) {
     const icon = document.createElement("i");
 
-    icon.addEventListener("click", async e => onClickPriorityIcon(e, todo));
+    icon.addEventListener("click", e => onClickPriorityIcon(e, todo));
 
     if (todo.priority === TODO_IMPORTANCE_LOW) {
         icon.classList.add("fa-solid", "fa-triangle-exclamation", "text-secondary");
@@ -103,25 +103,27 @@ function onDragStart(event) {
  * @param {MouseEvent} event 
  * @param {Todo} todo
  */
-async function onClickPriorityIcon(event, todo) {
+function onClickPriorityIcon(event, todo) {
     event.preventDefault();
 
-    try {
-        for (let i = 0; i < state.todos.length; i++) {
-            if (state.todos[i].id === todo.id) {
-                const updatedPriority =
-                    state.todos[i].priority === TODO_IMPORTANCE_LOW ? TODO_IMPORTANCE_HIGH : TODO_IMPORTANCE_LOW;
+    for (let i = 0; i < state.todos.length; i++) {
+        if (state.todos[i].id === todo.id) {
+            const updatedPriority =
+                state.todos[i].priority === TODO_IMPORTANCE_LOW ? TODO_IMPORTANCE_HIGH : TODO_IMPORTANCE_LOW;
 
-                await updateTodoPrioroty(state.todos[i], updatedPriority);
+            updateTodoPrioroty$(state.todos[i], updatedPriority).subscribe({
+                next: () => {
+                    state.todos[i].priority = updatedPriority;
+                    renderTodos();
+                },
+                error: error => {
+                    console.error("Failed to update document: ", error);
+                    alert("Failed to update todo. Please try again later.")
+                }
+            });
 
-                state.todos[i].priority = updatedPriority;
-                break;
-            }
+            break;
         }
-
-        renderTodos();
-    } catch (error) {
-        console.error(error);
     }
 }
 
@@ -129,21 +131,23 @@ async function onClickPriorityIcon(event, todo) {
  * 
  * @param {Todo} todo 
  */
-async function onChangeCheckBox(todo) {
-    try {
-        for (let i = 0; i < state.todos.length; i++) {
-            if (state.todos[i].id === todo.id) {
-                const updatedStatus = state.todos[i].status === "pending" ? "done" : "pending";
+function onChangeCheckBox(todo) {
+    for (let i = 0; i < state.todos.length; i++) {
+        if (state.todos[i].id === todo.id) {
+            const updatedStatus = state.todos[i].status === "pending" ? "done" : "pending";
 
-                await updateTodoStatus(state.todos[i], updatedStatus);
-
-                state.todos[i].status = updatedStatus;
-                break;
-            }
+            updateTodoStatus$(state.todos[i], updatedStatus).subscribe({
+                next: () => {
+                    state.todos[i].status = updatedStatus;
+                    renderTodos();
+                },
+                error: error => {
+                    console.error("Failed to update document: ", error);
+                    alert("Failed to update todo. Please try again.")
+                }
+            });
+            
+            break;
         }
-
-        renderTodos();
-    } catch (error) {
-        console.error(error);
     }
 }

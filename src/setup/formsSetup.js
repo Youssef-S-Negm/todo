@@ -1,4 +1,4 @@
-import { addTodo, updateTodoStatus } from "../firebase/todo.service.js";
+import { addTodo$, updateTodoStatus$ } from "../firebase/todo.service.js";
 import Todo from "../model/todo.model.js";
 import state from "../state.js";
 import renderTodos from "../utils/render.js";
@@ -36,7 +36,7 @@ export function setupDropZone(zoneId) {
         e.preventDefault();
     });
 
-    zone.addEventListener("drop", async e => await onDropCard(e, zoneId));
+    zone.addEventListener("drop", e => onDropCard(e, zoneId));
 }
 
 
@@ -44,7 +44,7 @@ export function setupDropZone(zoneId) {
  * 
  * @param {SubmitEvent} event 
  */
-async function onAddTodo(event) {
+function onAddTodo(event) {
     event.preventDefault();
 
     const input = document.getElementById("add-todo-input");
@@ -52,17 +52,20 @@ async function onAddTodo(event) {
     if (isValidInput(input.value)) {
         const todo = new Todo(input.value);
 
-        try {
-            const addedDoc = await addTodo(todo);
-            todo.id = addedDoc.id
+        addTodo$(todo).subscribe({
+            next: addedDoc => {
+                todo.id = addedDoc.id
 
-            state.todos.push(todo);
-            renderTodos();
+                state.todos.push(todo);
+                renderTodos();
 
-            input.value = "";
-        } catch (error) {
-            console.error(error);
-        }
+                input.value = "";
+            },
+            error: error => {
+                console.error("Failed to add document: ", error);
+                alert("Failed to add todo. Please try again.")
+            }
+        });
 
         return;
     }
@@ -98,25 +101,27 @@ function onChangeSortOption(event) {
  * @param {DragEvent} event 
  * @param {string} zoneId 
  */
-async function onDropCard(event, zoneId) {
+function onDropCard(event, zoneId) {
     event.preventDefault();
 
     const id = event.dataTransfer.getData("text/plain");
 
-    try {
-        for (let i = 0; i < state.todos.length; i++) {
-            if (state.todos[i].id == id) {
-                const updatedStatus = zoneId === "pending" ? "pending" : "done";
+    for (let i = 0; i < state.todos.length; i++) {
+        if (state.todos[i].id == id) {
+            const updatedStatus = zoneId === "pending" ? "pending" : "done";
 
-                await updateTodoStatus(state.todos[i], updatedStatus);
+            updateTodoStatus$(state.todos[i], updatedStatus).subscribe({
+                next: () => {
+                    state.todos[i].status = updatedStatus;
+                    renderTodos();
+                },
+                error: error => {
+                    console.error("Failed to update document", error);
+                    alert("Failed to update todo. Try again later.")
+                }
+            });
 
-                state.todos[i].status = updatedStatus;
-                break;
-            }
+            break;
         }
-
-        renderTodos();
-    } catch (error) {
-        console.error(error);
     }
 }

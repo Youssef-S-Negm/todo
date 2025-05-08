@@ -1,4 +1,4 @@
-import { getAllTodos } from "./firebase/todo.service.js";
+import { getAllTodos$ } from "./firebase/todo.service.js";
 import Todo from "./model/todo.model.js";
 import { setUpAddTodoForm, setupDropZone, setUpSearchForm, setUpSortActions } from "./setup/formsSetup.js";
 import state from "./state.js";
@@ -13,16 +13,17 @@ setupDropZone("completed");
 
 document.addEventListener("DOMContentLoaded", onStart)
 
-async function onStart() {
-    try {
-        const snapshot = await getAllTodos();
-
-        snapshot.forEach(doc => {
-            state.todos.push(Todo.toInstance({ ...doc.data(), id: doc.id }))
-        })
-
-        renderTodos();
-    } catch (error) {
-        console.error(error);
-    }
+function onStart() {
+    getAllTodos$().subscribe({
+        next: snapshot => {
+            snapshot.forEach(doc => {
+                state.todos.push(Todo.toInstance({ ...doc.data(), id: doc.id }))
+            })
+            renderTodos();
+        },
+        error: error => {
+            console.error("Failed to update document: ", error);
+            alert("Fetching todos faild. Please try again.")
+        }
+    })
 }
