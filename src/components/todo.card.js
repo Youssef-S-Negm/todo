@@ -13,21 +13,13 @@ export default function createCard(todo) {
     const card = document.createElement("div");
     card.dataset.id = todo.id.toString();
     card.draggable = true;
-    card.ondragstart = onDragStart;
+    card.addEventListener("dragstart", onDragStart);
     const cardBody = createCardBody(todo);
 
     card.classList.add("card", "mb-2");
     card.appendChild(cardBody);
 
     return card;
-}
-
-/**
- * 
- * @param {DragEvent} event 
- */
-function onDragStart(event) {
-    event.dataTransfer.setData("text", event.target.dataset.id)
 }
 
 /**
@@ -57,28 +49,7 @@ function createCardBody(todo) {
 function createIndicator(todo) {
     const icon = document.createElement("i");
 
-    icon.onclick = async function (event) {
-        event.preventDefault();
-
-        try {
-            for (let i = 0; i < state.todos.length; i++) {
-                if (state.todos[i].id === todo.id) {
-                    const updatedPriority =
-                        state.todos[i].priority === TODO_IMPORTANCE_LOW ? TODO_IMPORTANCE_HIGH : TODO_IMPORTANCE_LOW;
-
-                    await updateTodoPrioroty(state.todos[i], updatedPriority);
-
-                    state.todos[i].priority = updatedPriority;
-                    break;
-                }
-            }
-
-            renderTodos();
-        } catch (error) {
-            console.error(error);
-        }
-
-    }
+    icon.addEventListener("click", async e => onClickPriorityIcon(e, todo));
 
     if (todo.priority === TODO_IMPORTANCE_LOW) {
         icon.classList.add("fa-solid", "fa-triangle-exclamation", "text-secondary");
@@ -114,24 +85,65 @@ function createCheckBox(todo) {
     checkBox.id = todo.id;
     checkBox.checked = (todo.status === "done");
 
-    checkBox.addEventListener('change', async function (e) {
-        try {
-            for (let i = 0; i < state.todos.length; i++) {
-                if (state.todos[i].id === todo.id) {
-                    const updatedStatus = state.todos[i].status === "pending" ? "done" : "pending";
-
-                    await updateTodoStatus(state.todos[i], updatedStatus);
-
-                    state.todos[i].status = updatedStatus;
-                    break;
-                }
-            }
-
-            renderTodos();
-        } catch (error) {
-            console.error(error);
-        }
-    });
+    checkBox.addEventListener('change', () => onChangeCheckBox(todo));
 
     return checkBox;
+}
+
+/**
+ * 
+ * @param {DragEvent} event 
+ */
+function onDragStart(event) {
+    event.dataTransfer.setData("text", event.target.dataset.id)
+}
+
+/**
+ * 
+ * @param {MouseEvent} event 
+ * @param {Todo} todo
+ */
+async function onClickPriorityIcon(event, todo) {
+    event.preventDefault();
+
+    try {
+        for (let i = 0; i < state.todos.length; i++) {
+            if (state.todos[i].id === todo.id) {
+                const updatedPriority =
+                    state.todos[i].priority === TODO_IMPORTANCE_LOW ? TODO_IMPORTANCE_HIGH : TODO_IMPORTANCE_LOW;
+
+                await updateTodoPrioroty(state.todos[i], updatedPriority);
+
+                state.todos[i].priority = updatedPriority;
+                break;
+            }
+        }
+
+        renderTodos();
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+/**
+ * 
+ * @param {Todo} todo 
+ */
+async function onChangeCheckBox(todo) {
+    try {
+        for (let i = 0; i < state.todos.length; i++) {
+            if (state.todos[i].id === todo.id) {
+                const updatedStatus = state.todos[i].status === "pending" ? "done" : "pending";
+
+                await updateTodoStatus(state.todos[i], updatedStatus);
+
+                state.todos[i].status = updatedStatus;
+                break;
+            }
+        }
+
+        renderTodos();
+    } catch (error) {
+        console.error(error);
+    }
 }
