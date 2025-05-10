@@ -16,7 +16,7 @@ export default function createCard(todo) {
     card.addEventListener("dragstart", onDragStart);
     const cardBody = createCardBody(todo);
 
-    card.classList.add("card", "mb-2");
+    card.classList.add("card", "mb-2", "draggable");
     card.appendChild(cardBody);
 
     return card;
