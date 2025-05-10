@@ -9,7 +9,7 @@ import { setUpSearchForm, setUpSortActions } from "../setup/formsSetup.js";
 import state from "../state.js";
 import search from "./search.js";
 
-export default function renderTodos() {
+export function renderTodos() {
     const pendingTodos = document.getElementById("pending-todos");
     const completedTodos = document.getElementById("completed-todos");
 
@@ -104,4 +104,15 @@ export default function renderTodos() {
     })
 
     search();
+}
+
+export function renderSpinner() {
+    const loadingContainer = document.getElementById("loading-container");
+
+    if (state.isLoading) {
+        loadingContainer.classList.remove("visually-hidden");
+        return;
+    }
+
+    loadingContainer.classList.add("visually-hidden");
 }
