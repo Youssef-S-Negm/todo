@@ -7,7 +7,8 @@ const state = {
     */
     todos: [],
     searchQuery: "",
-    sortOption: SORT_OPTION_DATE_ASC
+    sortOption: SORT_OPTION_DATE_ASC,
+    isLoading: false
 }
 
 export default state;
