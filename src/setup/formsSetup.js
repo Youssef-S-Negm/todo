@@ -1,7 +1,7 @@
 import { addTodo$, updateTodoStatus$ } from "../firebase/todo.service.js";
 import Todo from "../model/todo.model.js";
 import state from "../state.js";
-import renderTodos from "../utils/render.js";
+import { renderSpinner, renderTodos } from "../utils/render.js";
 import search from "../utils/search.js";
 import isValidInput from "../utils/validation.js";
 
@@ -51,19 +51,26 @@ function onAddTodo(event) {
 
     if (isValidInput(input.value)) {
         const todo = new Todo(input.value);
+        state.isLoading = true;
 
+        renderSpinner();
         addTodo$(todo).subscribe({
             next: addedDoc => {
                 todo.id = addedDoc.id
+                state.isLoading = false;
 
                 state.todos.push(todo);
                 renderTodos();
+                renderSpinner();
 
                 input.value = "";
             },
             error: error => {
+                state.isLoading = false;
+
                 console.error("Failed to add document: ", error);
-                alert("Failed to add todo. Please try again.")
+                alert("Failed to add todo. Please try again.");
+                renderSpinner();
             }
         });
 
@@ -109,15 +116,23 @@ function onDropCard(event, zoneId) {
     for (let i = 0; i < state.todos.length; i++) {
         if (state.todos[i].id == id) {
             const updatedStatus = zoneId === "pending" ? "pending" : "done";
+            state.isLoading = true;
 
+            renderSpinner();
             updateTodoStatus$(state.todos[i], updatedStatus).subscribe({
                 next: () => {
+                    state.isLoading = false;
                     state.todos[i].status = updatedStatus;
+
                     renderTodos();
+                    renderSpinner();
                 },
                 error: error => {
+                    state.isLoading = false;
+
                     console.error("Failed to update document", error);
-                    alert("Failed to update todo. Try again later.")
+                    alert("Failed to update todo. Try again later.");
+                    renderSpinner();
                 }
             });
 

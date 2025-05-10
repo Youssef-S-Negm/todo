@@ -2,7 +2,7 @@ import { TODO_IMPORTANCE_HIGH, TODO_IMPORTANCE_LOW } from "../constants/constant
 import { updateTodoPrioroty$, updateTodoStatus$ } from "../firebase/todo.service.js";
 import Todo from "../model/todo.model.js";
 import state from "../state.js";
-import renderTodos from "../utils/render.js";
+import { renderSpinner, renderTodos } from "../utils/render.js";
 
 /**
  * 
@@ -110,15 +110,23 @@ function onClickPriorityIcon(event, todo) {
         if (state.todos[i].id === todo.id) {
             const updatedPriority =
                 state.todos[i].priority === TODO_IMPORTANCE_LOW ? TODO_IMPORTANCE_HIGH : TODO_IMPORTANCE_LOW;
+            state.isLoading = true;
 
+            renderSpinner();
             updateTodoPrioroty$(state.todos[i], updatedPriority).subscribe({
                 next: () => {
+                    state.isLoading = false;
                     state.todos[i].priority = updatedPriority;
+
                     renderTodos();
+                    renderSpinner();
                 },
                 error: error => {
+                    state.isLoading = false;
+
                     console.error("Failed to update document: ", error);
-                    alert("Failed to update todo. Please try again later.")
+                    alert("Failed to update todo. Please try again later.");
+                    renderSpinner();
                 }
             });
 
@@ -135,18 +143,26 @@ function onChangeCheckBox(todo) {
     for (let i = 0; i < state.todos.length; i++) {
         if (state.todos[i].id === todo.id) {
             const updatedStatus = state.todos[i].status === "pending" ? "done" : "pending";
+            state.isLoading = true;
 
+            renderSpinner();
             updateTodoStatus$(state.todos[i], updatedStatus).subscribe({
                 next: () => {
+                    state.isLoading = false;
                     state.todos[i].status = updatedStatus;
+
                     renderTodos();
+                    renderSpinner();
                 },
                 error: error => {
+                    state.isLoading = false;
+
                     console.error("Failed to update document: ", error);
-                    alert("Failed to update todo. Please try again.")
+                    alert("Failed to update todo. Please try again.");
+                    renderSpinner();
                 }
             });
-            
+
             break;
         }
     }
